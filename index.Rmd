@@ -212,3 +212,42 @@ b_lyrics %>%
   filter(grepl(pattern, line)) %>%
   mutate(nrow = n())
 ```
+
+#### Part 2C
+Using the `b_lyrics` dataset,
+
+1. Tokenize each lyrical line by words.
+2. Remove the “stopwords”.
+3. Calculate the total number for each word in the lyrics.
+4. Using the “bing” sentiment lexicon, add a column to the summarized data frame adding the “bing” sentiment lexicon.
+5. Sort the rows from most frequent to least frequent words.
+6. Only keep the top 25 most frequent words.
+7. Auto print the wrangled tibble data frame.
+8. Use `ggplot2` to create a bar plot with the top words on the y-axis and the frequency of each word on the x-axis. Color each bar by the sentiment of each word from the “bing” sentiment lexicon. Bars should be ordered from most frequent on the top to least frequent on the bottom of the plot.
+9. Create a word cloud of the top 25 most frequent words.
+
+```{r 2c}
+```
+
+#### Part 2D
+Repeat the same analysis as above in Part 2C, but for `ts_lyrics`.
+
+```{r 2d}
+```
+
+#### Part 2E
+Using the `ts_lyrics` dataset,
+
+1. Tokenize each lyrical line by words.
+2. Remove the “stopwords”.
+3. Calculate the total number for each word in the lyrics **for each Album**.
+4. Using the “afinn” sentiment lexicon, add a column to the summarized data frame adding the “afinn” sentiment lexicon.
+5. Calculate the average sentiment score **for each Album**.
+6. Auto print the wrangled tibble data frame.
+7. Join the wrangled data frame from Part 1A (album sales in millions) with the wrangled data frame from #6 above (average sentiment score for each album).
+8. Using `ggplot2`, create a scatter plot of the average sentiment score for each album (y-axis) and the album release data along the x-axis. Make the size of each point the album sales in millions.
+9. Add a horizontal line at y-intercept=0.
+10. Write 2-3 sentences interpreting the plot answering the question “How has the sentiment of Taylor Swift’s albums have changed over time?”. Add a title, subtitle, and useful axis labels.
+
+```{r 2e}
+```
