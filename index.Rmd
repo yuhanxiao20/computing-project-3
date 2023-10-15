@@ -2,13 +2,113 @@
 title: "Project 3"
 author: "Yuhan Xiao"
 output: html_document
-date: "2023-10-23"
+date: "2023-10-22"
 ---
 
 ## Background 
-```{r message = FALSE}
+```{r message = FALSE, warning = FALSE}
 library(here)
 library(tidyverse)
 library(lubridate)
 library(ggplot2)
+```
+
+#### Load data
+```{r message = FALSE}
+rds_files <- c("b_lyrics.RDS", "ts_lyrics.RDS", "sales.RDS")
+## Check whether we have all 3 files
+if (any(!file.exists(here("data", rds_files)))) {
+    ## If we don't, then download the data
+    b_lyrics <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-29/beyonce_lyrics.csv")
+    ts_lyrics <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-29/taylor_swift_lyrics.csv")
+    sales <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-29/sales.csv")
+
+    ## Then save the data objects to RDS files
+    saveRDS(b_lyrics, file = here("data", "b_lyrics.RDS"))
+    saveRDS(ts_lyrics, file = here("data", "ts_lyrics.RDS"))
+    saveRDS(sales, file = here("data", "sales.RDS"))
+}
+
+# load the datasets
+b_lyrics <- readRDS(here("data", "b_lyrics.RDS"))
+ts_lyrics <- readRDS(here("data", "ts_lyrics.RDS"))
+sales <- readRDS(here("data", "sales.RDS"))
+```
+
+## Part 1: Explore album sales
+In this section, the goal is to explore the sales of studio albums from Beyoncé and Taylor Swift.
+
+**Notes**
+
+* In each of the subsections below that ask you to create a plot, you must create a title, subtitle, x-axis label, and y-axis label with units where applicable. For example, if your axis says “sales” as an axis label, change it to “sales (in millions)”.
+
+#### Part 1A
+In this section, we will do some data wrangling.
+
+1. Use `lubridate` to create a column called `released` that is a `Date` class. However, to be able to do this, you first need to use `stringr` to search for pattern that matches things like this “(US)[51]” in a string like this “September 1, 2006 (US)[51]” and removes them. (**Note**: to get full credit, you must create the regular expression).
+2. Use `forcats` to create a factor called country (**Note**: you may need to collapse some factor levels).
+3. Transform the `sales` into a unit that is album sales in millions of dollars.
+4. Keep only album sales from the UK, the US or the World.
+5. Auto print your final wrangled tibble data frame.
+
+```{r}
+pattern = "\\s\\(\\w+\\)\\[\\d+\\]"
+sales_wrangled <- sales %>%
+  mutate(released = str_replace(released, pattern, "")) %>%
+  mutate(released = mdy(released)) %>%
+  mutate(country = as.factor(country)) %>%
+  mutate(country = fct_collapse(country, "FRA" = c("FR", "FRA"),
+         "WW" = c("World", "WW"))) %>%
+  mutate(sales = sales/1000000) %>%
+  filter(country %in% c("UK", "US", "WW"))
+
+sales_wrangled
+```
+
+#### Part 1B
+In this section, we will do some more data wrangling followed by summarization using wrangled data from Part 1A.
+
+1. Keep only album sales from the US.
+2. Create a new column called `years_since_release` corresponding to the number of years since the release of each album from Beyoncé and Taylor Swift. This should be a whole number and you should round down to “14” if you get a non-whole number like “14.12” years. (**Hint**: you may find the `interval()` function from `lubridate` helpful here, but this not the only way to do this.)
+3. Calculate the most recent, oldest, and the median years since albums were released for both Beyoncé and Taylor Swift.
+```{r}
+sales_summ <- sales_wrangled %>%
+  select(country, released, artist) %>%
+  filter(country == "US") %>%
+  mutate(years_since_release = floor(as.duration(interval(released, today())) / dyears(1))) %>%
+  group_by(artist) %>%
+  summarise(
+    most_recent_years = min(years_since_release),
+    oldest_years = max(years_since_release),
+    median_years = median(years_since_release)
+  )
+
+sales_summ
+```
+
+#### Part 1C
+Using the wrangled data from Part 1A:
+
+1. Calculate the total album sales for each `artist` and for each `country` (only sales from the UK, US, and World).
+2. Using the total album sales, create a percent stacked barchart using `ggplot2` of the percentage of sales of studio albums (in millions) along the y-axis for the two artists along the x-axis colored by the `country`.
+
+```{r message = FALSE}
+sales_total <- sales_wrangled %>%
+  select(artist, country, sales) %>%
+  filter(country %in% c("UK", "US", "WW")) %>%
+  group_by(artist, country) %>%
+  summarise(
+    total_sales = sum(sales)
+  )
+
+sales_total %>% ggplot(aes(fill=country, y=total_sales, x=artist)) +
+  geom_bar(position="fill", stat="identity") +
+  scale_fill_manual(values = c("#FAAB18", "#4CAF50", "#1380A1")) +
+  labs(title = "Total Album Sales Percent for Each Artist by Country", subtitle = str_wrap("Beyoncé has a higher percent of album sales from the world than Taylor Swift", 50), caption = "Yuhan Xiao", x = "artist", y = "sales (in percent)", color = "country") +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(hjust = 0.5, vjust = 1, size = 15), 
+        axis.text.x = element_text(angle = 0, hjust = 1),
+        plot.background = element_rect(fill = "white"),
+        text = element_text(family = "Times"))
+  
 ```

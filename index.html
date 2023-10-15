@@ -11,7 +11,7 @@
 
 <meta name="author" content="Yuhan Xiao" />
 
-<meta name="date" content="2023-10-23" />
+<meta name="date" content="2023-10-22" />
 
 <title>Project 3</title>
 
@@ -352,7 +352,7 @@ display: none;
 
 <h1 class="title toc-ignore">Project 3</h1>
 <h4 class="author">Yuhan Xiao</h4>
-<h4 class="date">2023-10-23</h4>
+<h4 class="date">2023-10-22</h4>
 
 </div>
 
@@ -363,6 +363,83 @@ display: none;
 library(tidyverse)
 library(lubridate)
 library(ggplot2)</code></pre>
+<div id="load-data" class="section level4">
+<h4>Load data</h4>
+<pre class="r"><code>rds_files &lt;- c(&quot;b_lyrics.RDS&quot;, &quot;ts_lyrics.RDS&quot;, &quot;sales.RDS&quot;)
+## Check whether we have all 3 files
+if (any(!file.exists(here(&quot;data&quot;, rds_files)))) {
+    ## If we don&#39;t, then download the data
+    b_lyrics &lt;- readr::read_csv(&quot;https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-29/beyonce_lyrics.csv&quot;)
+    ts_lyrics &lt;- readr::read_csv(&quot;https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-29/taylor_swift_lyrics.csv&quot;)
+    sales &lt;- readr::read_csv(&quot;https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-29/sales.csv&quot;)
+
+    ## Then save the data objects to RDS files
+    saveRDS(b_lyrics, file = here(&quot;data&quot;, &quot;b_lyrics.RDS&quot;))
+    saveRDS(ts_lyrics, file = here(&quot;data&quot;, &quot;ts_lyrics.RDS&quot;))
+    saveRDS(sales, file = here(&quot;data&quot;, &quot;sales.RDS&quot;))
+}
+
+# load the datasets
+b_lyrics &lt;- readRDS(here(&quot;data&quot;, &quot;b_lyrics.RDS&quot;))
+ts_lyrics &lt;- readRDS(here(&quot;data&quot;, &quot;ts_lyrics.RDS&quot;))
+sales &lt;- readRDS(here(&quot;data&quot;, &quot;sales.RDS&quot;))</code></pre>
+</div>
+</div>
+<div id="part-1-explore-album-sales" class="section level2">
+<h2>Part 1: Explore album sales</h2>
+<p>In this section, the goal is to explore the sales of studio albums
+from Beyoncé and Taylor Swift.</p>
+<p><strong>Notes</strong></p>
+<ul>
+<li>In each of the subsections below that ask you to create a plot, you
+must create a title, subtitle, x-axis label, and y-axis label with units
+where applicable. For example, if your axis says “sales” as an axis
+label, change it to “sales (in millions)”.</li>
+</ul>
+<div id="part-1a" class="section level4">
+<h4>Part 1A</h4>
+<p>In this section, we will do some data wrangling.</p>
+<ol style="list-style-type: decimal">
+<li>Use <code>lubridate</code> to create a column called
+<code>released</code> that is a <code>Date</code> class. However, to be
+able to do this, you first need to use <code>stringr</code> to search
+for pattern that matches things like this “(US)[51]” in a string like
+this “September 1, 2006 (US)[51]” and removes them.
+(<strong>Note</strong>: to get full credit, you must create the regular
+expression).</li>
+<li>Use <code>forcats</code> to create a factor called country
+(<strong>Note</strong>: you may need to collapse some factor
+levels).</li>
+<li>Transform the <code>sales</code> into a unit that is album sales in
+millions of dollars.</li>
+<li>Keep only album sales from the UK, the US or the World.</li>
+<li>Auto print your final wrangled tibble data frame.</li>
+</ol>
+<pre class="r"><code>pattern = &quot;\\s\\(\\w+\\)\\[\\d+\\]&quot;
+sales_wrangled &lt;- sales %&gt;%
+  mutate(released = str_replace(released, pattern, &quot;&quot;)) %&gt;%
+  mutate(released = mdy(released)) %&gt;%
+  mutate(country = as.factor(country)) %&gt;%
+  mutate(country = fct_collapse(country, &quot;FRA&quot; = c(&quot;FR&quot;, &quot;FRA&quot;),
+         &quot;WW&quot; = c(&quot;World&quot;, &quot;WW&quot;))) %&gt;%
+  mutate(sales = sales/1000000) %&gt;%
+  filter(country %in% c(&quot;UK&quot;, &quot;US&quot;, &quot;WW&quot;))
+sales_wrangled</code></pre>
+<pre><code>## # A tibble: 36 × 8
+##    artist       title        country  sales released   re_release  label formats
+##    &lt;chr&gt;        &lt;chr&gt;        &lt;fct&gt;    &lt;dbl&gt; &lt;date&gt;     &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt;  
+##  1 Taylor Swift Taylor Swift US       5.72  2006-10-24 March 18, … Big … CD, CD…
+##  2 Taylor Swift Fearless     WW      12     2008-11-11 October 27… Big … CD, CD…
+##  3 Taylor Swift Fearless     US       7.18  2008-11-11 October 27… Big … CD, CD…
+##  4 Taylor Swift Fearless     UK       0.609 2008-11-11 October 27… Big … CD, CD…
+##  5 Taylor Swift Speak Now    WW       5     2010-10-25 &lt;NA&gt;        Big … CD, CD…
+##  6 Taylor Swift Speak Now    US       4.69  2010-10-25 &lt;NA&gt;        Big … CD, CD…
+##  7 Taylor Swift Speak Now    UK       0.169 2010-10-25 &lt;NA&gt;        Big … CD, CD…
+##  8 Taylor Swift Red          WW       6     2012-10-22 &lt;NA&gt;        Big … CD, CD…
+##  9 Taylor Swift Red          US       4.46  2012-10-22 &lt;NA&gt;        Big … CD, CD…
+## 10 Taylor Swift Red          UK       0.693 2012-10-22 &lt;NA&gt;        Big … CD, CD…
+## # ℹ 26 more rows</code></pre>
+</div>
 </div>
 
 
