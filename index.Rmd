@@ -1,0 +1,14 @@
+---
+title: "Project 3"
+author: "Yuhan Xiao"
+output: html_document
+date: "2023-10-23"
+---
+
+## Background 
+```{r message = FALSE}
+library(here)
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+```
