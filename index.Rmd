@@ -6,7 +6,7 @@ date: "2023-10-22"
 ---
 
 ## Background 
-```{r message = FALSE, warning = FALSE}
+```{r bg, message = FALSE, warning = FALSE}
 library(here)
 library(tidyverse)
 library(lubridate)
@@ -14,7 +14,7 @@ library(ggplot2)
 ```
 
 #### Load data
-```{r message = FALSE}
+```{r load, message = FALSE}
 rds_files <- c("b_lyrics.RDS", "ts_lyrics.RDS", "sales.RDS")
 ## Check whether we have all 3 files
 if (any(!file.exists(here("data", rds_files)))) {
@@ -51,7 +51,7 @@ In this section, we will do some data wrangling.
 4. Keep only album sales from the UK, the US or the World.
 5. Auto print your final wrangled tibble data frame.
 
-```{r}
+```{r 1a}
 pattern = "\\s\\(\\w+\\)\\[\\d+\\]"
 sales_wrangled <- sales %>%
   mutate(released = str_replace(released, pattern, "")) %>%
@@ -71,7 +71,7 @@ In this section, we will do some more data wrangling followed by summarization u
 1. Keep only album sales from the US.
 2. Create a new column called `years_since_release` corresponding to the number of years since the release of each album from Beyoncé and Taylor Swift. This should be a whole number and you should round down to “14” if you get a non-whole number like “14.12” years. (**Hint**: you may find the `interval()` function from `lubridate` helpful here, but this not the only way to do this.)
 3. Calculate the most recent, oldest, and the median years since albums were released for both Beyoncé and Taylor Swift.
-```{r}
+```{r 1b}
 sales_summ <- sales_wrangled %>%
   select(country, released, artist) %>%
   filter(country == "US") %>%
@@ -92,7 +92,7 @@ Using the wrangled data from Part 1A:
 1. Calculate the total album sales for each `artist` and for each `country` (only sales from the UK, US, and World).
 2. Using the total album sales, create a percent stacked barchart using `ggplot2` of the percentage of sales of studio albums (in millions) along the y-axis for the two artists along the x-axis colored by the `country`.
 
-```{r message = FALSE}
+```{r 1c, message = FALSE}
 sales_total <- sales_wrangled %>%
   select(artist, country, sales) %>%
   filter(country %in% c("UK", "US", "WW")) %>%
@@ -104,7 +104,7 @@ sales_total <- sales_wrangled %>%
 sales_total %>% ggplot(aes(fill=country, y=total_sales, x=artist)) +
   geom_bar(position="fill", stat="identity") +
   scale_fill_manual(values = c("#FAAB18", "#4CAF50", "#1380A1")) +
-  labs(title = "Total Album Sales Percent for Each Artist by Country", subtitle = str_wrap("Beyoncé has a higher percent of album sales from the world than Taylor Swift", 50), caption = "Yuhan Xiao", x = "artist", y = "sales (in percent)", color = "country") +
+  labs(title = "Total Album Sales Percent for Each Artist by Country", subtitle = str_wrap("Beyoncé has a higher percent of album sales from the world than Taylor Swift", 50), caption = "Yuhan Xiao", x = "artist", y = "sales (in percent)", fill = "country") +
   theme_minimal(base_size = 14) +
   theme(plot.title = element_text(hjust = 0.5, vjust = 1, size = 15), 
         axis.text.x = element_text(angle = 0, hjust = 1),
@@ -112,3 +112,58 @@ sales_total %>% ggplot(aes(fill=country, y=total_sales, x=artist)) +
         text = element_text(family = "Times"))
   
 ```
+
+#### Part 1D
+Using the wrangled data from Part 1A, use `ggplot2` to create a bar plot for the sales of studio albums (in millions) along the x-axis for each of the album titles along the y-axis.
+
+**Note**:
+
+* You only need to consider the global World sales (you can ignore US and UK sales for this part).
+* The title of the album must be clearly readable along the y-axis.
+* Each bar should be colored by which artist made that album.
+* The bars should be ordered from albums with the most sales (top) to the least sales (bottom) (**Note**: you must use functions from `forcats` for this step).
+
+```{r 1d}
+sales_wrangled %>%
+  select(sales, artist, title, country) %>%
+  filter(country == "WW") %>%
+  ggplot(aes(sales, fct_reorder(.f = title, .x = sales), fill = fct_reorder2(artist, sales, title))) +
+    geom_bar(stat = "identity") + 
+    scale_fill_manual(values = c("#FAAB18", "#1380A1")) +
+    labs(title = "Total Album Sales (in Millions) for Each Artist by Album Title", subtitle = str_wrap("Taylor Swift has more album sales than Beyoncé overall", 60), caption = "Yuhan Xiao", x = "sales (in millions)", y = "album title", fill = "artist") +
+    theme_minimal(base_size = 14) +
+    theme(plot.title = element_text(hjust = 0.5, vjust = 1, size = 15), 
+          plot.subtitle = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = 0, hjust = 1),
+          plot.background = element_rect(fill = "white"),
+          text = element_text(family = "Times"))
+```
+
+#### Part 1E
+Using the wrangled data from Part 1A, use `ggplot2` to create a scatter plot of sales of studio albums (in millions) along the y-axis by the released date for each album along the x-axis.
+
+**Note**:
+
+* The points should be colored by the artist.
+* There should be three scatter plots (one for UK, US and world sales) faceted by rows.
+
+```{r 1e}
+sales_wrangled %>%
+  select(sales, released, artist, country) %>%
+  ggplot(aes(released, sales, color = fct_reorder2(artist, sales, released))) +
+    facet_wrap(~country, nrow=2, scales="fixed") +
+    geom_point() +
+    scale_color_manual(values = c("#FAAB18", "#1380A1")) +
+    labs(title = str_wrap("Total Album Sales (in Millions) Over Album Released Date for Each Artist by Country", 70), subtitle = str_wrap("Taylor Swift has more album sales than Beyoncé overall. Beyoncé released a few albums before Taylor Swift released hers", 70), caption = "Yuhan Xiao", x = "released date (year)", y = "sales (in millions)", color = "artist") +
+    theme_minimal(base_size = 14) +
+    theme(plot.title = element_text(hjust = 0.5, vjust = 1, size = 15), 
+          plot.subtitle = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = 0, hjust = 1),
+          plot.background = element_rect(fill = "white"),
+          text = element_text(family = "Times"),
+          legend.position = c(0.8, 0.15))
+  
+```
+
+## Part 2: Exploring sentiment of lyrics
+In Part 2, we will explore the lyrics in the `b_lyrics` and `ts_lyrics` datasets.
