@@ -12,6 +12,7 @@ library(tidyverse)
 library(lubridate)
 library(ggplot2)
 library(tidytext)
+library(wordcloud)
 ```
 
 #### Load data
@@ -185,13 +186,13 @@ ts_lyrics_line <- ts_lyrics %>%
 
 pattern = "hello"
 ts_lyrics_line %>% 
-  select(Artist, Title, line) %>%
+  select(Artist, line) %>%
   filter(grepl(pattern, line)) %>%
   mutate(nrow = n())
 
 pattern = "goodbye"
 ts_lyrics_line %>% 
-  select(Artist, Title, line) %>%
+  select(Artist, line) %>%
   filter(grepl(pattern, line)) %>%
   mutate(nrow = n())
 ```
@@ -202,13 +203,13 @@ Repeat the same analysis for b_lyrics as described in Part 2A.
 ```{r 2b}
 pattern = "hello"
 b_lyrics %>% 
-  select(artist_name, song_name, line) %>%
+  select(artist_name, line) %>%
   filter(grepl(pattern, line)) %>%
   mutate(nrow = n())
 
 pattern = "goodbye"
 b_lyrics %>% 
-  select(artist_name, song_name, line) %>%
+  select(artist_name, line) %>%
   filter(grepl(pattern, line)) %>%
   mutate(nrow = n())
 ```
@@ -226,13 +227,65 @@ Using the `b_lyrics` dataset,
 8. Use `ggplot2` to create a bar plot with the top words on the y-axis and the frequency of each word on the x-axis. Color each bar by the sentiment of each word from the “bing” sentiment lexicon. Bars should be ordered from most frequent on the top to least frequent on the bottom of the plot.
 9. Create a word cloud of the top 25 most frequent words.
 
-```{r 2c}
+```{r 2c, message = FALSE}
+b_top_25_freq_word <- b_lyrics %>%
+  unnest_tokens(
+    output = word,
+    input = line
+  ) %>%
+  anti_join(stop_words) %>%
+  count(word, sort = TRUE) %>%
+  inner_join(get_sentiments("bing")) %>%
+  head(25)
+
+b_top_25_freq_word
+
+b_top_25_freq_word %>%
+  ggplot(aes(n, fct_reorder(.f = word, .x = n), fill = fct_reorder2(sentiment, word, n))) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("#FAAB18", "#1380A1")) +
+  labs(title = str_wrap("The Top 25 Most Frequent Words in Beyoncé's Lyrics", 70), subtitle = str_wrap("More words are positive rather than negative.", 70), caption = "Yuhan Xiao", x = "frequency", y = "word", fill = "sentiment") +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(hjust = 0.5, vjust = 1, size = 15), 
+        plot.subtitle = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 0, hjust = 1),
+        plot.background = element_rect(fill = "white"),
+        text = element_text(family = "Times"))
+
+b_top_25_freq_word %>%
+  with(wordcloud(word, n))
 ```
 
 #### Part 2D
 Repeat the same analysis as above in Part 2C, but for `ts_lyrics`.
 
-```{r 2d}
+```{r 2d, message = FALSE}
+ts_top_25_freq_word <- ts_lyrics_line %>%
+  unnest_tokens(
+    output = word,
+    input = line
+  ) %>%
+  anti_join(stop_words) %>%
+  count(word, sort = TRUE) %>%
+  inner_join(get_sentiments("bing")) %>%
+  head(25)
+
+ts_top_25_freq_word
+
+ts_top_25_freq_word %>%
+  ggplot(aes(n, fct_reorder(.f = word, .x = n), fill = fct_reorder2(sentiment, word, n))) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("#FAAB18", "#1380A1")) +
+  labs(title = str_wrap("The Top 25 Most Frequent Words in Taylor Swift's Lyrics", 70), subtitle = str_wrap("The word 'love' is the most frequently used one. Other words are more negative than positive.", 70), caption = "Yuhan Xiao", x = "frequency", y = "word", fill = "sentiment") +
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(hjust = 0.5, vjust = 1, size = 15), 
+        plot.subtitle = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 0, hjust = 1),
+        plot.background = element_rect(fill = "white"),
+        text = element_text(family = "Times"))
+
+ts_top_25_freq_word %>%
+  with(wordcloud(word, n))
 ```
 
 #### Part 2E
