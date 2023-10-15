@@ -302,5 +302,35 @@ Using the `ts_lyrics` dataset,
 9. Add a horizontal line at y-intercept=0.
 10. Write 2-3 sentences interpreting the plot answering the question “How has the sentiment of Taylor Swift’s albums have changed over time?”. Add a title, subtitle, and useful axis labels.
 
-```{r 2e}
+```{r 2e, message = FALSE}
+ts_album_ss <- ts_lyrics_line %>%
+  unnest_tokens(
+    output = word,
+    input = line
+  ) %>%
+  anti_join(stop_words) %>%
+  group_by(Album) %>%
+  count(word, sort = TRUE) %>%
+  inner_join(get_sentiments("afinn")) %>%
+  summarize(
+    avg_sentiment = mean(value)
+  ) %>%
+  mutate(Album = tolower(Album))
+
+ts_album_ss
+
+sales_wrangled %>%
+  rename(Album = title) %>%
+  mutate(Album = tolower(Album)) %>%
+  inner_join(ts_album_ss) %>%
+  ggplot(aes(released, avg_sentiment, size = sales)) +
+    geom_point(color = "#FAAB18") +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "#1380A1") +
+    labs(title = str_wrap("The Average Sentiment Score of Taylor Swift's Album Over Released Year", 60), subtitle = str_wrap("Taylor Swift's albums overall have a negative sentiment. The album '1989' released in 2014 is the most negative one. The two more recent albums 'Reputation' and 'Lover' are more positive though they are still less positive than her early albums released before '1989'.", 70), caption = "Yuhan Xiao", x = "released date (year)", y = "average sentiment score", size = "sales (in millions)") +
+    theme_minimal(base_size = 14) +
+    theme(plot.title = element_text(hjust = 0.5, vjust = 1, size = 15),
+          plot.subtitle = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = 0, hjust = 1),
+          plot.background = element_rect(fill = "white"),
+          text = element_text(family = "Times"))
 ```
