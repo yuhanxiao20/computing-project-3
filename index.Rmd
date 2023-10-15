@@ -11,6 +11,7 @@ library(here)
 library(tidyverse)
 library(lubridate)
 library(ggplot2)
+library(tidytext)
 ```
 
 #### Load data
@@ -167,3 +168,47 @@ sales_wrangled %>%
 
 ## Part 2: Exploring sentiment of lyrics
 In Part 2, we will explore the lyrics in the `b_lyrics` and `ts_lyrics` datasets.
+
+#### Part 2A
+Using `ts_lyrics`, create a new column called `line` with one line containing the character string for each line of Taylor Swift’s songs.
+
+* How many lines in Taylor Swift’s lyrics contain the word “hello”? For full credit, show all the rows in `ts_lyrics` that have “hello” in the `line` column and report how many rows there are in total.
+* How many lines in Taylor Swift’s lyrics contain the word “goodbye”? For full credit, show all the rows in `ts_lyrics` that have “goodbye” in the `line` column and report how many rows there are in total.
+
+```{r 2a}
+ts_lyrics_line <- ts_lyrics %>%
+  unnest_tokens(
+    output = line,
+    input = Lyrics,
+    token = "lines"
+  ) 
+
+pattern = "hello"
+ts_lyrics_line %>% 
+  select(Artist, Title, line) %>%
+  filter(grepl(pattern, line)) %>%
+  mutate(nrow = n())
+
+pattern = "goodbye"
+ts_lyrics_line %>% 
+  select(Artist, Title, line) %>%
+  filter(grepl(pattern, line)) %>%
+  mutate(nrow = n())
+```
+
+#### Part 2B
+Repeat the same analysis for b_lyrics as described in Part 2A.
+
+```{r 2b}
+pattern = "hello"
+b_lyrics %>% 
+  select(artist_name, song_name, line) %>%
+  filter(grepl(pattern, line)) %>%
+  mutate(nrow = n())
+
+pattern = "goodbye"
+b_lyrics %>% 
+  select(artist_name, song_name, line) %>%
+  filter(grepl(pattern, line)) %>%
+  mutate(nrow = n())
+```
