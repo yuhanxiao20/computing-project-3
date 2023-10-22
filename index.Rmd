@@ -153,7 +153,7 @@ Using the wrangled data from Part 1A, use `ggplot2` to create a scatter plot of 
 sales_wrangled %>%
   select(sales, released, artist, country) %>%
   ggplot(aes(released, sales, color = fct_reorder2(artist, sales, released))) +
-    facet_wrap(~country, nrow=2, scales="fixed") +
+    facet_wrap(~country, nrow=3, scales="fixed") +
     geom_point() +
     scale_color_manual(values = c("#FAAB18", "#1380A1")) +
     labs(title = str_wrap("Total Album Sales (in Millions) Over Album Released Date for Each Artist by Country", 70), subtitle = str_wrap("Taylor Swift has more album sales than Beyoncé overall. Beyoncé released a few albums before Taylor Swift released hers", 70), caption = "Yuhan Xiao", x = "released date (year)", y = "sales (in millions)", color = "artist") +
